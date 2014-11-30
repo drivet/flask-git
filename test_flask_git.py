@@ -46,24 +46,24 @@ class TestFlaskGitFetches(unittest.TestCase):
         git = Git()
         git.init_app(self.app)
         with self.app.app_context():
-            commits = list(git.commits_for_path('content/hello.md'))
+            commits = list(git.commits_for_path_recent_first('content/hello.md'))
             self.assertEquals(2, len(commits))
             self.assertEquals('second commit', commits[0].message)
             self.assertEquals('first commit', commits[1].message)
 
-            commits = list(git.commits_for_path('content/bar.md'))
+            commits = list(git.commits_for_path_recent_first('content/bar.md'))
             self.assertEquals(1, len(commits))
 
     def test_fetches_all_commits_for_file_in_reverse_order(self):
         git = Git()
         git.init_app(self.app)
         with self.app.app_context():
-            commits = list(git.commits_for_path('content/hello.md', reverse=True))
+            commits = list(git.commits_for_path_recent_last('content/hello.md'))
             self.assertEquals(2, len(commits))
             self.assertEquals('first commit', commits[0].message)
             self.assertEquals('second commit', commits[1].message)
 
-            commits = git.commits_for_path('content/bar.md', reverse=True)
+            commits = git.commits_for_path_recent_last('content/bar.md')
             self.assertEquals(1, len(list(commits)))
 
     def tearDown(self):
