@@ -26,14 +26,17 @@ class TempRepo(object):
             f.write(contents)
         self.files.append(repofile)
     
-    def commit(self, message, date=time.time()):
+    def commit(self, message, date=time.time(), author=None):
         index = self.repo.index
         index.read()
         for f in self.files:
             index.add(f)
         index.write()
         treeid = index.write_tree()
-        sig = pygit2.Signature('Alice Author', 'alice@authors.tld', date, 0)
+        if author:
+            sig = pygit2.Signature(author, 'alice@authors.tld', date, 0)
+        else:
+            sig = pygit2.Signature('Alice Author', 'alice@authors.tld', date, 0)
         self.repo.create_commit('HEAD', sig, sig, message, treeid, self._parent())
         self.has_parent = True
 

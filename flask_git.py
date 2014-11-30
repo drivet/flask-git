@@ -71,9 +71,8 @@ class Git(object):
                 yield last_commit
         else:
             last_oid_of_file = None
-            last_commit = None
             for commit in self.commits(pygit2.GIT_SORT_REVERSE):
-                if path in commit.tree:
+                if path in commit.tree: 
                     # we found a commit where the file exists in the repo at
                     # the time of this commit.  Is its SHA different from the
                     # SHA that we've previously seen for this file?
@@ -83,7 +82,7 @@ class Git(object):
                         # or it's the first one we've seen
                         yield commit
                         last_oid_of_file = current_oid
-                else:
+                else: 
                     # the commit seems to contain no mention of the file.
                     # Maybe we haven't seen it yet, maybe it was deleted.
                     # Either way clear the last SHA.
