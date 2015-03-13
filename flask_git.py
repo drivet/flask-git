@@ -18,12 +18,17 @@ class Git(object):
 
     def init_app(self, app):
         app.config.setdefault('GIT_REPOPATH', '/tmp')
+        app.config.setdefault('GIT_SEARCH_PATH', '')
 
     def init_repo(self):
         print current_app.config['GIT_REPOPATH']
         return pygit2.init_repository(current_app.config['GIT_REPOPATH'], False)
 
     def open_repo(self):
+        if current_app.config['GIT_SEARCH_PATH']:
+            config_level = pygit2.GIT_CONFIG_LEVEL_GLOBAL
+            search_path = current_app.config['GIT_SEARCH_PATH']
+            pygit2.settings.search_path[config_level] = search_path
         return pygit2.Repository(current_app.config['GIT_REPOPATH'])
 
     @property
