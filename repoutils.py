@@ -8,7 +8,8 @@ class TempRepo(object):
     def __init__(self):
         self.root_dir = None
         self.repo = None
-        self.files = []
+        self.added_files = []
+        self.removed_files = []
         self.has_parent = False
 
     def init(self):
@@ -24,13 +25,20 @@ class TempRepo(object):
             os.makedirs(dirname)
         with open(path, 'w') as f:
             f.write(contents)
-        self.files.append(repofile)
+        self.added_files.append(repofile)
     
+    def delete_contents(self, repofile):
+        path = os.path.join(self.root_dir, repofile)
+        os.remove(path)
+        self.removed_files.append(repofile)
+
     def commit(self, message, date=time.time(), author=None):
         index = self.repo.index
         index.read()
-        for f in self.files:
+        for f in self.added_files:
             index.add(f)
+        for f in self.removed_files:
+            index.remove(f)
         index.write()
         treeid = index.write_tree()
         if author:
@@ -39,6 +47,8 @@ class TempRepo(object):
             sig = pygit2.Signature('Alice Author', 'alice@authors.tld', date, 0)
         self.repo.create_commit('HEAD', sig, sig, message, treeid, self._parent())
         self.has_parent = True
+        self.added_files = []
+        self.removed_files = []
 
     def _parent(self):
         if self.has_parent:
