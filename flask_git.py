@@ -1,3 +1,6 @@
+"""Flask extension to manipulate Git repositories"""
+from __future__ import absolute_import
+
 import pygit2
 from flask import current_app
 
@@ -11,20 +14,27 @@ except ImportError:
 
 
 class Git(object):
+    """This class integrates a Git repository into one or more Flask
+    applications
+    """
+
     def __init__(self, app=None):
         self.app = app
         if app is not None:
             self.init_app(app)
 
     def init_app(self, app):
+        """Set this extension up for this application"""
         app.config.setdefault('GIT_REPOPATH', '/tmp')
         app.config.setdefault('GIT_SEARCH_PATH', '')
 
     def init_repo(self):
-        print current_app.config['GIT_REPOPATH']
-        return pygit2.init_repository(current_app.config['GIT_REPOPATH'], False)
+        """Initialize a repository"""
+        return pygit2.init_repository(current_app.config['GIT_REPOPATH'],
+                                      False)
 
     def open_repo(self):
+        """Open an existing git repository"""
         if current_app.config['GIT_SEARCH_PATH']:
             config_level = pygit2.GIT_CONFIG_LEVEL_GLOBAL
             search_path = current_app.config['GIT_SEARCH_PATH']
@@ -33,6 +43,7 @@ class Git(object):
 
     @property
     def repository(self):
+        """property method to get an instance of the git repo"""
         ctx = stack.top
         if ctx is not None:
             if not hasattr(ctx, 'git_repo'):
@@ -40,15 +51,19 @@ class Git(object):
             return ctx.git_repo
 
     def commits(self, sort_mode=pygit2.GIT_SORT_TIME):
+        """get all the commits from this repo as a generator"""
         ref = self.repository.lookup_reference('refs/heads/master')
         return self.repository.walk(ref.target, sort_mode)
 
-    # git commits store the entire snapshot of the repo, which makes it
-    # somewhat inconvenient to find the history of a file.  Basically, we
-    # have to find all those commits associated with a change in the SHA of
-    # the file who's history we're tracking
-   
     def commits_for_path_recent_first(self, path, follow=False):
+        """get all commits for a file, most recent first
+
+        git commits store the entire snapshot of the repo, which makes it
+        somewhat inconvenient to find the history of a file.  Basically, we
+        have to find all those commits associated with a change in the SHA of
+        the file who's history we're tracking
+        """
+
         last_oid_of_file = None
         last_commit = None
         current_path = path
@@ -62,7 +77,7 @@ class Git(object):
                     # this commit seems to have changed the oid of the file
                     yield last_commit
                 last_oid_of_file = current_oid
-            elif last_oid_of_file: 
+            elif last_oid_of_file:
                 # this commit seems to contain no mention of the file.
                 # BUT we have a record of the file existing in a
                 # previous (more recent) commit. I guess this means
@@ -74,7 +89,8 @@ class Git(object):
 
                     renamed = False
                     for patch in diff:
-                        if patch.status == 'R' and patch.new_file_path == current_path:
+                        if patch.status == 'R' and \
+                           patch.new_file_path == current_path:
                             # the current_path is the "new" path in a
                             # rename patch.  This indicates that the file
                             # was renamed here from the "old" path
@@ -94,11 +110,14 @@ class Git(object):
 
         if last_oid_of_file:
             yield last_commit
-        
+
     def commits_for_path_recent_last(self, path):
+        """get all commits for a file, most recent first, least recent
+        first
+        """
         last_oid_of_file = None
         for commit in self.commits(pygit2.GIT_SORT_REVERSE):
-            if path in commit.tree: 
+            if path in commit.tree:
                 # we found a commit where the file exists in the repo at
                 # the time of this commit.  Is its SHA different from the
                 # SHA that we've previously seen for this file?
@@ -108,19 +127,19 @@ class Git(object):
                     # or it's the first one we've seen
                     yield commit
                     last_oid_of_file = current_oid
-            else: 
+            else:
                 # the commit seems to contain no mention of the file.
                 # Maybe we haven't seen it yet, maybe it was deleted.
                 # Either way clear the last SHA.
                 last_oid_of_file = None
 
-
     def commit_files(self, files, author, committer, message):
-        repo =  self.repository
+        """commit a bunch of files with author and message"""
+        repo = self.repository
         index = repo.index
         index.read()
-        for f in files:
-            index.add(f)
+        for filename in files:
+            index.add(filename)
         index.write()
         treeid = index.write_tree()
         repo.create_commit('refs/heads/master',
