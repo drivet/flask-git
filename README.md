@@ -2,6 +2,7 @@ flask-git
 =========
 
 [![Build Status](https://travis-ci.org/drivet/flask-git.svg?branch=master)](https://travis-ci.org/drivet/flask-git)
+[![Coverage Status](https://coveralls.io/repos/drivet/flask-git/badge.svg)](https://coveralls.io/r/drivet/flask-git)
 
 Flask extension to provide basic manipulation (initialization, commit object
 fetching) of git repositories.  More than that is not supported at the

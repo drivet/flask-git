@@ -8,6 +8,9 @@ before_install:
 # command to install dependencies
 install:
   - "pip install -r requirements-test.txt"
+  - "pip install coveralls"
 
 # command to run tests
-script:  nosetests
+script:  nosetests --with-coverage --cover-package=flask_git
+
+after_success: coveralls
